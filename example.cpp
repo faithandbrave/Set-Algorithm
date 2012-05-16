@@ -31,7 +31,7 @@ void union_example()
     std::set<int> b = {4, 5, 6};
     std::set<int> result;
 
-    make_union(a, b, [&](int x) { result.insert(x); });
+    set_union(a, b, [&](int x) { result.insert(x); });
 
     print("union", result);
 }
@@ -42,7 +42,7 @@ void intersection_example()
     std::set<int> b = {4, 5, 6, 1};
     std::set<int> result;
 
-    make_intersection(a, b, [&](int x) { result.insert(x); });
+    set_intersection(a, b, [&](int x) { result.insert(x); });
 
     print("intersection", result);
 }
@@ -53,7 +53,7 @@ void difference_example()
     std::set<int> b = {2, 3};
     std::set<int> result;
 
-    make_difference(a, b, [&](int x) { result.insert(x); });
+    set_difference(a, b, [&](int x) { result.insert(x); });
 
     print("difference", result);
 }
@@ -64,7 +64,7 @@ void symmetric_difference_example()
     std::set<int> b = {2, 3, 4, 7, 8};
     std::set<int> result;
 
-    make_symmetric_difference(a, b, [&](int x) { result.insert(x); });
+    set_symmetric_difference(a, b, [&](int x) { result.insert(x); });
 
     print("symmetric_difference", result);
 }

@@ -14,15 +14,38 @@
 //
 
 #include <algorithm>
+#include <utility>
+#include <type_traits>
+#include <boost/utility/enable_if.hpp>
 #include <boost/range.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/move/move.hpp>
 
+template <class F, class V>
+struct is_unary_callable_base {
+private:
+	template <class F2, class V2>
+    static auto check(F2&& f, V2 v) -> decltype((f(v)), std::true_type());
+
+    static auto check(...) -> std::false_type;
+public:
+	typedef
+		decltype(check(std::declval<F>(), std::declval<V>()))
+	type;
+};
+
+template <class F, class V>
+struct is_unary_callable : is_unary_callable_base<F, V>::type {};
+
 template <class InputIterator1, class InputIterator2,
           class UnaryFunction, class Compare>
-void make_union(InputIterator1 first1, InputIterator1 last1,
-                InputIterator2 first2, InputIterator2 last2,
-                UnaryFunction&& f, Compare&& comp)
+auto set_union(InputIterator1 first1, InputIterator1 last1,
+               InputIterator2 first2, InputIterator2 last2,
+               UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_union(
             first1, last1, first2, last2,
@@ -31,9 +54,13 @@ void make_union(InputIterator1 first1, InputIterator1 last1,
 }
 
 template <class InputIterator1, class InputIterator2, class UnaryFunction>
-void make_union(InputIterator1 first1, InputIterator1 last1,
-                InputIterator2 first2, InputIterator2 last2,
-                UnaryFunction&& f)
+auto set_union(InputIterator1 first1, InputIterator1 last1,
+               InputIterator2 first2, InputIterator2 last2,
+               UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_union(
             first1, last1, first2, last2,
@@ -42,27 +69,39 @@ void make_union(InputIterator1 first1, InputIterator1 last1,
 
 template <class InputRange1, class InputRange2,
           class UnaryFunction, class Compare>
-void make_union(const InputRange1& r1, const InputRange2& r2,
-                UnaryFunction&& f, Compare&& comp)
+auto set_union(const InputRange1& r1, const InputRange2& r2,
+               UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_union(boost::begin(r1), boost::end(r1),
-               boost::begin(r2), boost::end(r2),
-               boost::move(f), boost::move(comp));
+    ::set_union(boost::begin(r1), boost::end(r1),
+              boost::begin(r2), boost::end(r2),
+              boost::move(f), boost::move(comp));
 }
 
 template <class InputRange1, class InputRange2, class UnaryFunction>
-void make_union(const InputRange1& r1, const InputRange2& r2, UnaryFunction&& f)
+auto set_union(const InputRange1& r1, const InputRange2& r2, UnaryFunction&& f)
+	-> 	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+		>>::type
 {
-    make_union(boost::begin(r1), boost::end(r1),
-               boost::begin(r2), boost::end(r2),
-               boost::move(f));
+    ::set_union(boost::begin(r1), boost::end(r1),
+              boost::begin(r2), boost::end(r2),
+              boost::move(f));
 }
 
 template <class InputIterator1, class InputIterator2,
           class UnaryFunction, class Compare>
-void make_intersection(InputIterator1 first1, InputIterator1 last1,
-                       InputIterator2 first2, InputIterator2 last2,
-                       UnaryFunction&& f, Compare&& comp)
+auto set_intersection(InputIterator1 first1, InputIterator1 last1,
+                      InputIterator2 first2, InputIterator2 last2,
+                      UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_intersection(
             first1, last1, first2, last2,
@@ -71,9 +110,13 @@ void make_intersection(InputIterator1 first1, InputIterator1 last1,
 }
 
 template <class InputIterator1, class InputIterator2, class UnaryFunction>
-void make_intersection(InputIterator1 first1, InputIterator1 last1,
-                       InputIterator2 first2, InputIterator2 last2,
-                       UnaryFunction&& f)
+auto set_intersection(InputIterator1 first1, InputIterator1 last1,
+                      InputIterator2 first2, InputIterator2 last2,
+                      UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_intersection(
             first1, last1, first2, last2,
@@ -82,10 +125,14 @@ void make_intersection(InputIterator1 first1, InputIterator1 last1,
 
 template <class InputRange1, class InputRange2,
           class UnaryFunction, class Compare>
-void make_intersection(const InputRange1& r1, const InputRange2& r2,
-                       UnaryFunction&& f, Compare&& comp)
+auto set_intersection(const InputRange1& r1, const InputRange2& r2,
+                       UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_intersection(
+    ::set_intersection(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f),
@@ -94,10 +141,14 @@ void make_intersection(const InputRange1& r1, const InputRange2& r2,
 }
 
 template <class InputRange1, class InputRange2, class UnaryFunction>
-void make_intersection(const InputRange1& r1, const InputRange2& r2,
-                       UnaryFunction&& f)
+auto set_intersection(const InputRange1& r1, const InputRange2& r2,
+                      UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_intersection(
+    ::set_intersection(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f));
@@ -105,9 +156,13 @@ void make_intersection(const InputRange1& r1, const InputRange2& r2,
 
 template <class InputIterator1, class InputIterator2,
           class UnaryFunction, class Compare>
-void make_difference(InputIterator1 first1, InputIterator1 last1,
-                     InputIterator2 first2, InputIterator2 last2,
-                     UnaryFunction&& f, Compare&& comp)
+auto set_difference(InputIterator1 first1, InputIterator1 last1,
+                    InputIterator2 first2, InputIterator2 last2,
+                    UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_difference(
             first1, last1, first2, last2,
@@ -116,9 +171,13 @@ void make_difference(InputIterator1 first1, InputIterator1 last1,
 }
 
 template <class InputIterator1, class InputIterator2, class UnaryFunction>
-void make_difference(InputIterator1 first1, InputIterator1 last1,
-                     InputIterator2 first2, InputIterator2 last2,
-                     UnaryFunction&& f)
+auto set_difference(InputIterator1 first1, InputIterator1 last1,
+                    InputIterator2 first2, InputIterator2 last2,
+                    UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_difference(
             first1, last1, first2, last2,
@@ -127,10 +186,14 @@ void make_difference(InputIterator1 first1, InputIterator1 last1,
 
 template <class InputRange1, class InputRange2,
           class UnaryFunction, class Compare>
-void make_difference(const InputRange1& r1, const InputRange2& r2,
-                     UnaryFunction&& f, Compare&& comp)
+auto set_difference(const InputRange1& r1, const InputRange2& r2,
+                    UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_difference(
+    ::set_difference(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f),
@@ -138,9 +201,13 @@ void make_difference(const InputRange1& r1, const InputRange2& r2,
 }
 
 template <class InputRange1, class InputRange2, class UnaryFunction>
-void make_difference(const InputRange1& r1, const InputRange2& r2, UnaryFunction&& f)
+auto set_difference(const InputRange1& r1, const InputRange2& r2, UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_difference(
+    ::set_difference(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f));
@@ -148,10 +215,14 @@ void make_difference(const InputRange1& r1, const InputRange2& r2, UnaryFunction
 
 template <class InputIterator1, class InputIterator2,
           class UnaryFunction, class Compare>
-void make_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
-                               InputIterator2 first2, InputIterator2 last2,
-                               UnaryFunction&& f,
-                               Compare&& comp)
+auto set_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
+                              InputIterator2 first2, InputIterator2 last2,
+                              UnaryFunction&& f,
+                              Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_symmetric_difference(
             first1, last1,
@@ -161,9 +232,13 @@ void make_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
 }
 
 template <class InputIterator1, class InputIterator2, class UnaryFunction>
-void make_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
-                               InputIterator2 first2, InputIterator2 last2,
-                               UnaryFunction&& f)
+auto set_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
+                              InputIterator2 first2, InputIterator2 last2,
+                              UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				decltype(*first1)
+	>>::type
 {
     std::set_symmetric_difference(
             first1, last1,
@@ -173,10 +248,14 @@ void make_symmetric_difference(InputIterator1 first1, InputIterator1 last1,
 
 template <class InputRange1, class InputRange2,
           class UnaryFunction, class Compare>
-void make_symmetric_difference(const InputRange1& r1, const InputRange2& r2,
-                               UnaryFunction&& f, Compare&& comp)
+auto set_symmetric_difference(const InputRange1& r1, const InputRange2& r2,
+                              UnaryFunction&& f, Compare&& comp) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_symmetric_difference(
+    ::set_symmetric_difference(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f),
@@ -184,10 +263,14 @@ void make_symmetric_difference(const InputRange1& r1, const InputRange2& r2,
 }
 
 template <class InputRange1, class InputRange2, class UnaryFunction>
-void make_symmetric_difference(const InputRange1& r1, const InputRange2& r2,
-                               UnaryFunction&& f)
+auto set_symmetric_difference(const InputRange1& r1, const InputRange2& r2,
+                              UnaryFunction&& f) ->
+	typename boost::enable_if<is_unary_callable<
+				UnaryFunction,
+				typename boost::range_value<InputRange1>::type
+	>>::type
 {
-    make_symmetric_difference(
+    ::set_symmetric_difference(
             boost::begin(r1), boost::end(r1),
             boost::begin(r2), boost::end(r2),
             boost::move(f));
